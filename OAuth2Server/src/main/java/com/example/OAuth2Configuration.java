@@ -22,7 +22,9 @@ import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFacto
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableAuthorizationServer
@@ -31,26 +33,35 @@ import java.util.List;
 public class OAuth2Configuration extends AuthorizationServerConfigurerAdapter {
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+    	Map<String,String> map = new HashMap<>();
+    	map.put("name", "wocao");
         clients.inMemory()
-                .withClient("acme") // clientId
-                .secret("acmesecret") // clientSecret
+                .withClient("aek") // clientId
+                .secret("russell") // clientSecret
                 .scopes("openid")
                 .autoApprove(true)
                 .authorities("READ", "WRITE")
-                .authorizedGrantTypes("implicit", "refresh_token", "password", "authorization_code", "client_credentials");
+                //.authorizedGrantTypes("implicit", "refresh_token", "password", "authorization_code", "client_credentials");
+                .authorizedGrantTypes("refresh_token", "password", "authorization_code")
+                .accessTokenValiditySeconds(60*60*24)
+                .refreshTokenValiditySeconds(7*24*60*60)
+                .redirectUris("http://www.baidu.com")
+                .additionalInformation(map);
     }
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        List<UserDetails> userDetailsList = new ArrayList<>();
-        userDetailsList.add(new User("user","user", Lists.newArrayList(new SimpleGrantedAuthority("READ"))));
-        userDetailsList.add(new User("admin","admin",Lists.newArrayList(new SimpleGrantedAuthority("READ"),new SimpleGrantedAuthority("WRITE"))));
+//        List<UserDetails> userDetailsList = new ArrayList<>();
+//        userDetailsList.add(new User("user","user", Lists.newArrayList(new SimpleGrantedAuthority("READ"))));
+//        userDetailsList.add(new User("admin","admin",Lists.newArrayList(new SimpleGrantedAuthority("READ"),new SimpleGrantedAuthority("WRITE"))));
 
         endpoints.tokenStore(tokenStore())
                 .tokenEnhancer(jwtTokenEnhancer())
-                .authenticationManager(authenticationManager)
+                .authenticationManager(authenticationManager);
                 // 需要指定userDetailsService否则在请求refresh_token接口时报userDetailsService is required
-                .userDetailsService(new InMemoryUserDetailsManager(userDetailsList));
+               // .userDetailsService(new InMemoryUserDetailsManager(userDetailsList));
+        
+
     }
 
     @Autowired
